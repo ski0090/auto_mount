@@ -1,0 +1,22 @@
+[package]
+name = "auto_mount"
+version = "0.1.1"
+edition = "2021"
+authors = ["shalom <ski0090@naver.com>"]
+rust-version = "1.63"
+license-file = "LICENSE"
+keywords = ["device", "mount", "disk"]
+description = "auto_mount has a function that automatically mounts a newly inserted device as a gpt partition."
+repository = "https://github.com/ski0090/auto_mount"
+documentation = "https://docs.rs/auto_mount"
+readme = "ReadMe.md"
+include = ["**/*.rs", "Cargo.toml"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = ["--cfg", "doc_cfg"]
+
+[dependencies]
+sysinfo = "0.25"
