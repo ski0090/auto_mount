@@ -2,7 +2,8 @@
 
 auto_mount has a function that automatically mounts a newly inserted device as a gpt partition.
 
-## Caution
+## Important Caution
+All hdds in `/dev/sd*` will be formatted.
 
 # example
 ```rust
@@ -20,3 +21,8 @@ fn main() {
     mount_devices(&devices);
 }
 ```
+
+## Thanks for read
+Please register improvements, etc. in the issue
+
+gool luck!
