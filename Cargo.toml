@@ -1,6 +1,6 @@
 [package]
 name = "auto_mount"
-version = "0.1.3"
+version = "0.1.5"
 edition = "2021"
 authors = ["shalom <ski0090@naver.com>"]
 rust-version = "1.63"

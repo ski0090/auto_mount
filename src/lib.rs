@@ -40,12 +40,13 @@ pub fn mount_devices(devices: &[String]) {
         .iter()
         .map(|dev| {
             let mount_path = dev.split('/').collect::<Vec<_>>()[2];
+            let mount_path = format!("/mnt/{}", mount_path);
             if let Err(err) = create_dir(&mount_path) {
                 if err.kind() != ErrorKind::AlreadyExists {
                     panic!("{}", err);
                 }
             }
-            (find_uuid(dev), format!("/mnt/{}", mount_path))
+            (find_uuid(dev), mount_path)
         })
         .collect::<Vec<_>>();
 
@@ -156,10 +157,7 @@ fn output_to_string_list(output: Output) -> VecDeque<String> {
 }
 
 fn find_uuid(device: &str) -> String {
-    dbg!(device);
-
     let output = command(["blkid", &device, "-s", "UUID", "-o", "export"]);
-    dbg!(&output);
     output_to_string_list(output)[1].clone()
 }
 
