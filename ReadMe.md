@@ -2,6 +2,8 @@
 
 auto_mount has a function that automatically mounts a newly inserted device as a gpt partition.
 
+## Caution
+
 # example
 ```rust
 use auto_mount::{

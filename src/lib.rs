@@ -3,19 +3,12 @@
 //! auto_mount has a function that automatically mounts a newly inserted device as a gpt partition.
 //! # example
 //! ```
-//! use auto_mount::{
-//!     change_devices_to_gpt, create_partition, filter_unmounted_hdd_devices, find_connected_satas,
-//!     format_devices, mount_devices,
-//! };
-//!
-//! fn main() {
 //!     let devices = find_connected_satas();
 //!     let devices = filter_unmounted_hdd_devices(devices);
 //!     change_devices_to_gpt(&devices);
 //!     let devices = create_partition(&devices);
 //!     format_devices(&devices);
 //!     mount_devices(&devices);
-//! }
 //! ```
 
 use std::ffi::OsStr;
@@ -28,9 +21,9 @@ use std::{
 
 use sysinfo::{DiskExt, RefreshKind, SystemExt};
 
-pub fn mount_devices(devices: &Vec<String>) {
+pub fn mount_devices(devices: &[String]) {
     devices.iter().for_each(|device| {
-        let mount_path = device.split("/").collect::<Vec<_>>()[2];
+        let mount_path = device.split('/').collect::<Vec<_>>()[2];
         let mount_path = format!("/mnt/{}", mount_path);
         if let Err(err) = create_dir(&mount_path) {
             if err.kind() != ErrorKind::AlreadyExists {
@@ -51,14 +44,14 @@ pub fn mount_devices(devices: &Vec<String>) {
     command("mount -a");
 }
 
-pub fn format_devices(devices: &Vec<String>) {
+pub fn format_devices(devices: &[String]) {
     devices.iter().for_each(|device| {
         command(format!("mkfs.ext4 -F {}", device));
     });
 }
 
 /// one device one partition
-pub fn create_partition(devices: &Vec<String>) -> Vec<String> {
+pub fn create_partition(devices: &[String]) -> Vec<String> {
     devices
         .iter()
         .map(|device| {
@@ -69,7 +62,7 @@ pub fn create_partition(devices: &Vec<String>) -> Vec<String> {
 }
 
 /// changed to gpt to support devices larger than 4TB
-pub fn change_devices_to_gpt(devices: &Vec<String>) {
+pub fn change_devices_to_gpt(devices: &[String]) {
     devices.iter().for_each(|device| {
         command(format!("parted -s {} mklabel gpt", device));
     });
@@ -81,7 +74,7 @@ pub fn filter_unmounted_hdd_devices(devices: Vec<String>) -> Vec<String> {
         sysinfo::System::new_with_specifics(RefreshKind::new().with_disks().with_disks_list());
     system.refresh_all();
 
-    let hdds = devices
+    devices
         .into_iter()
         .filter(|device| {
             let output = command(format!("lsblk -d -o rota {}", device));
@@ -93,9 +86,7 @@ pub fn filter_unmounted_hdd_devices(devices: Vec<String>) -> Vec<String> {
             });
             iter.next() == Some("1") && !is_mounted
         })
-        .collect::<Vec<String>>();
-
-    hdds
+        .collect::<Vec<String>>()
 }
 
 /// find connected satas
