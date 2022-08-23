@@ -71,7 +71,7 @@ pub fn mount_devices(devices: &[String]) {
 
 pub fn format_devices(devices: &[String]) {
     devices.iter().for_each(|device| {
-        command(["mkfs.ext4", "-F", &device]);
+        command(["mkfs.ext4", "-F", device]);
     });
 }
 
@@ -86,7 +86,7 @@ pub fn create_partition(devices: &[String]) -> Vec<String> {
                 .spawn()
                 .unwrap();
             let mut fdisk = Command::new("sudo")
-                .args(["fdisk", &device])
+                .args(["fdisk", device])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
@@ -110,7 +110,7 @@ pub fn create_partition(devices: &[String]) -> Vec<String> {
 /// changed to gpt to support devices larger than 4TB
 pub fn change_devices_to_gpt(devices: &[String]) {
     devices.iter().for_each(|device| {
-        command(["parted", "-s", &device, "mklabel", "gpt"]);
+        command(["parted", "-s", device, "mklabel", "gpt"]);
     });
 }
 
@@ -123,7 +123,7 @@ pub fn filter_unmounted_hdd_devices(devices: Vec<String>) -> Vec<String> {
     devices
         .into_iter()
         .filter(|device| {
-            let output = command(["lsblk", "-d", "-o", "rota", &device]);
+            let output = command(["lsblk", "-d", "-o", "rota", device]);
             let result = output_to_string_list(output)[1].to_owned();
             let mut iter = result.split_whitespace();
             let is_mounted = system.disks().iter().any(|disk| {
@@ -157,7 +157,7 @@ fn output_to_string_list(output: Output) -> VecDeque<String> {
 }
 
 fn find_uuid(device: &str) -> String {
-    let output = command(["blkid", &device, "-s", "UUID", "-o", "export"]);
+    let output = command(["blkid", device, "-s", "UUID", "-o", "export"]);
     output_to_string_list(output)[1].clone()
 }
 
