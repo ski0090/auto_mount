@@ -17,4 +17,4 @@ all-features = true
 rustdoc-args = ["--cfg", "doc_cfg"]
 
 [dependencies]
-sysinfo = "0.25"
+sysinfo = "0.26"
