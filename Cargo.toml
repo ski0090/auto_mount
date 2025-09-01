@@ -18,3 +18,4 @@ rustdoc-args = ["--cfg", "doc_cfg"]
 
 [dependencies]
 sysinfo = "0.27"
+thiserror = "2.0.16"

@@ -5,13 +5,20 @@
 //! ```ignore
 //!     use auto_mount::*;
 //!
-//!     let devices = find_connected_satas();
-//!     let devices = filter_unmounted_hdd_devices(devices);
+//!     let devices = find_connected_satas().expect("Failed to find SATA devices");
+//!     let devices = filter_unmounted_hdd_devices(devices).expect("Failed to filter devices");
 //!     change_devices_to_gpt(&devices);
 //!     let devices = create_partition(&devices);
 //!     format_devices(&devices);
 //!     mount_devices(&devices);
 //! ```
+pub use device_discovery::{find_connected_satas, DeviceDiscoveryError};
+pub use device_filter::{filter_unmounted_hdd_devices, DeviceFilterError, DeviceInfo};
+pub use error::Error;
+
+mod device_discovery;
+mod device_filter;
+mod error;
 
 use std::ffi::OsStr;
 use std::fs::OpenOptions;
@@ -22,8 +29,6 @@ use std::{
     fs::create_dir,
     process::{Command, Output},
 };
-
-use sysinfo::{DiskExt, RefreshKind, SystemExt};
 
 pub fn mount_devices(devices: &[String]) {
     let fstab_path = "/etc/fstab";
@@ -114,35 +119,6 @@ pub fn change_devices_to_gpt(devices: &[String]) {
     devices.iter().for_each(|device| {
         command(["parted", "-s", device, "mklabel", "gpt"]);
     });
-}
-
-/// find unmounted hdd devices
-pub fn filter_unmounted_hdd_devices(devices: Vec<String>) -> Vec<String> {
-    let mut system =
-        sysinfo::System::new_with_specifics(RefreshKind::new().with_disks().with_disks_list());
-    system.refresh_all();
-
-    devices
-        .into_iter()
-        .filter(|device| {
-            let output = command(["lsblk", "-d", "-o", "rota", device]);
-            let result = output_to_string_list(output)[1].to_owned();
-            let mut iter = result.split_whitespace();
-            let is_mounted = system.disks().iter().any(|disk| {
-                let disk_name = disk.name().to_string_lossy().to_string();
-                disk_name.contains(device)
-            });
-            iter.next() == Some("1") && !is_mounted
-        })
-        .collect::<Vec<String>>()
-}
-
-/// find connected satas
-pub fn find_connected_satas() -> Vec<String> {
-    let output = command(["find", "/dev", "-name", "sd?"]);
-    let mut devices = Vec::from(output_to_string_list(output));
-    devices.sort();
-    devices
 }
 
 fn output_to_string_list(output: Output) -> VecDeque<String> {
