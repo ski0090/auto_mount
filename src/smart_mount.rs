@@ -6,7 +6,7 @@
 use crate::{
     change_devices_to_gpt, create_partition, filter_unmounted_hdd_devices, find_connected_satas,
     format_devices, mount_devices, DeviceDiscoveryError, DeviceFilterError, FilesystemError,
-    PartitionError,
+    MountError, PartitionError,
 };
 
 /// Errors that can occur during smart mounting
@@ -22,6 +22,8 @@ pub enum SmartMountError {
     Filesystem(#[from] FilesystemError),
     #[error("No devices found to process")]
     NoDevicesFound,
+    #[error("Mount operation failed: {0}")]
+    Mount(#[from] MountError),
 }
 
 /// Configuration for smart mounting
@@ -71,7 +73,7 @@ pub fn smart_auto_mount_with_config(config: MountConfig) -> Result<(), SmartMoun
     // Create partitions, format, and mount
     let devices = create_partition(&devices)?;
     format_devices(&devices)?;
-    mount_devices(&devices);
+    mount_devices(&devices)?;
 
     Ok(())
 }

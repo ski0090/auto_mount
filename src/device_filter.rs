@@ -3,7 +3,6 @@
 //! This module handles filtering of devices based on type (HDD) and mount status
 
 use std::process::Command;
-use sysinfo::{DiskExt, RefreshKind, SystemExt};
 
 /// Errors that can occur during device filtering
 #[derive(Debug, thiserror::Error)]
@@ -49,7 +48,7 @@ pub fn filter_unmounted_hdd_devices(
 
 /// Get detailed information about devices
 pub fn get_device_infos(devices: Vec<String>) -> Result<Vec<DeviceInfo>, DeviceFilterError> {
-    let system = create_system_info()?;
+    let system = create_disk_info()?;
     let mut device_infos = Vec::new();
 
     for device in devices {
@@ -88,8 +87,8 @@ fn is_rotational_device(device: &str) -> Result<bool, DeviceFilterError> {
 }
 
 /// Check if a device is currently mounted
-fn is_device_mounted(device: &str, system: &sysinfo::System) -> Result<bool, DeviceFilterError> {
-    let is_mounted = system.disks().iter().any(|disk| {
+fn is_device_mounted(device: &str, disks: &sysinfo::Disks) -> Result<bool, DeviceFilterError> {
+    let is_mounted = disks.iter().any(|disk| {
         let disk_name = disk.name().to_string_lossy();
         disk_name.contains(device)
     });
@@ -98,11 +97,9 @@ fn is_device_mounted(device: &str, system: &sysinfo::System) -> Result<bool, Dev
 }
 
 /// Create and initialize system information
-fn create_system_info() -> Result<sysinfo::System, DeviceFilterError> {
-    let mut system =
-        sysinfo::System::new_with_specifics(RefreshKind::new().with_disks().with_disks_list());
-    system.refresh_all();
-    Ok(system)
+fn create_disk_info() -> Result<sysinfo::Disks, DeviceFilterError> {
+    let disks = sysinfo::Disks::new_with_refreshed_list();
+    Ok(disks)
 }
 
 /// Alternative method to check rotational status via sysfs
@@ -131,7 +128,7 @@ pub fn is_rotational_via_sysfs(device: &str) -> Result<bool, DeviceFilterError> 
 pub fn filter_unmounted_hdd_devices_enhanced(
     devices: Vec<String>,
 ) -> Result<Vec<String>, DeviceFilterError> {
-    let system = create_system_info()?;
+    let system = create_disk_info()?;
     let mut filtered_devices = Vec::new();
 
     for device in devices {
