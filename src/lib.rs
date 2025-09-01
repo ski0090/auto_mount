@@ -39,14 +39,18 @@
 //!     mount_devices(&devices)?;
 //! ```
 pub use device_discovery::{find_connected_satas, DeviceDiscoveryError};
-pub use device_filter::{filter_unmounted_hdd_devices, DeviceFilterError, DeviceInfo};
+pub use device_filter::{
+    collect_device_infos, filter_unmounted_hdd_devices, DeviceFilterError, DeviceInfo,
+};
 pub use error::Error;
-pub use filesystem::{format_devices, FilesystemError, FilesystemType, FormatResult};
+pub use filesystem::{
+    format_devices, format_devices_with_type, FilesystemError, FilesystemType, FormatResult,
+};
 pub use mount_manager::{
     mount_devices, MountConfig as MountManagerConfig, MountEntry, MountError, MountResult,
 };
 pub use partition_manager::{
-    change_devices_to_gpt, create_partition, GptConversionResult, PartitionError, PartitionResult,
+    change_devices_to_gpt, create_partition, PartitionError, PartitionResult,
 };
 pub use smart_mount::{
     gpt_auto_mount, simple_auto_mount, smart_auto_mount, smart_auto_mount_with_config, MountConfig,

@@ -90,7 +90,7 @@ fn should_use_gpt(devices: &[String], config: &MountConfig) -> Result<bool, Smar
 
     // Check device sizes to determine if GPT is needed
     for device in devices {
-        if let Ok(size_gb) = get_device_size_gb(device) {
+        if let Ok(size_gb) = device_size_gb(device) {
             if size_gb >= config.gpt_threshold_gb {
                 return Ok(true);
             }
@@ -100,8 +100,8 @@ fn should_use_gpt(devices: &[String], config: &MountConfig) -> Result<bool, Smar
     Ok(false)
 }
 
-/// Get device size in GB
-fn get_device_size_gb(device: &str) -> Result<u64, SmartMountError> {
+/// Calculate device size in GB
+fn device_size_gb(device: &str) -> Result<u64, SmartMountError> {
     use std::process::Command;
 
     let output = Command::new("sudo")

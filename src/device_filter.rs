@@ -35,7 +35,7 @@ pub struct DeviceInfo {
 pub fn filter_unmounted_hdd_devices(
     devices: Vec<String>,
 ) -> Result<Vec<String>, DeviceFilterError> {
-    let device_infos = get_device_infos(devices)?;
+    let device_infos = collect_device_infos(devices)?;
 
     let filtered_devices: Vec<String> = device_infos
         .into_iter()
@@ -46,8 +46,8 @@ pub fn filter_unmounted_hdd_devices(
     Ok(filtered_devices)
 }
 
-/// Get detailed information about devices
-pub fn get_device_infos(devices: Vec<String>) -> Result<Vec<DeviceInfo>, DeviceFilterError> {
+/// Collect detailed information about devices
+pub fn collect_device_infos(devices: Vec<String>) -> Result<Vec<DeviceInfo>, DeviceFilterError> {
     let system = create_disk_info()?;
     let mut device_infos = Vec::new();
 
@@ -100,53 +100,6 @@ fn is_device_mounted(device: &str, disks: &sysinfo::Disks) -> Result<bool, Devic
 fn create_disk_info() -> Result<sysinfo::Disks, DeviceFilterError> {
     let disks = sysinfo::Disks::new_with_refreshed_list();
     Ok(disks)
-}
-
-/// Alternative method to check rotational status via sysfs
-#[allow(dead_code)]
-pub fn is_rotational_via_sysfs(device: &str) -> Result<bool, DeviceFilterError> {
-    use std::fs;
-
-    // Extract device name from path (e.g., "/dev/sda" -> "sda")
-    let device_name = device
-        .strip_prefix("/dev/")
-        .ok_or(DeviceFilterError::InvalidOutputFormat)?;
-
-    let queue_path = format!("/sys/block/{}/queue/rotational", device_name);
-
-    match fs::read_to_string(&queue_path) {
-        Ok(content) => {
-            let value = content.trim();
-            Ok(value == "1")
-        }
-        Err(e) => Err(DeviceFilterError::IoError(e)),
-    }
-}
-
-/// Enhanced filtering with fallback methods
-#[allow(dead_code)]
-pub fn filter_unmounted_hdd_devices_enhanced(
-    devices: Vec<String>,
-) -> Result<Vec<String>, DeviceFilterError> {
-    let system = create_disk_info()?;
-    let mut filtered_devices = Vec::new();
-
-    for device in devices {
-        // Try sysfs method first (faster, no sudo required)
-        let is_rotational = match is_rotational_via_sysfs(&device) {
-            Ok(rotational) => rotational,
-            Err(_) => {
-                // Fallback to lsblk command
-                is_rotational_device(&device)?
-            }
-        };
-
-        if is_rotational && !is_device_mounted(&device, &system)? {
-            filtered_devices.push(device);
-        }
-    }
-
-    Ok(filtered_devices)
 }
 
 #[cfg(test)]

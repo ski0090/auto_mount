@@ -186,12 +186,12 @@ fn prepare_mount_entry(device: &str, config: &MountConfig) -> Result<MountEntry,
     }
 
     // Get UUID
-    let uuid = get_device_uuid(device)?;
+    let uuid = device_uuid(device)?;
 
     // Create mount point
     let device_name = device
         .split('/')
-        .last()
+        .next_back()
         .ok_or_else(|| MountError::InvalidDevice(device.to_string()))?;
     let mount_point = format!("{}/{}", config.mount_base_path, device_name);
 
@@ -206,8 +206,8 @@ fn prepare_mount_entry(device: &str, config: &MountConfig) -> Result<MountEntry,
     })
 }
 
-/// Get UUID for a device
-fn get_device_uuid(device: &str) -> Result<String, MountError> {
+/// Find UUID for a device
+fn device_uuid(device: &str) -> Result<String, MountError> {
     let output = Command::new("sudo")
         .args(["blkid", device, "-s", "UUID", "-o", "export"])
         .output()?;
@@ -334,48 +334,6 @@ fn apply_mounts() -> Result<(), MountError> {
     }
 
     Ok(())
-}
-
-/// Check if a device is already mounted
-#[allow(dead_code)]
-pub fn is_device_mounted(device: &str) -> Result<bool, MountError> {
-    let output = Command::new("mount").output()?;
-
-    if !output.status.success() {
-        return Err(MountError::CommandFailed(
-            "Failed to get mount list".to_string(),
-        ));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout.contains(device))
-}
-
-/// Get list of current mount points
-#[allow(dead_code)]
-pub fn get_mount_points() -> Result<Vec<String>, MountError> {
-    let output = Command::new("mount").output()?;
-
-    if !output.status.success() {
-        return Err(MountError::CommandFailed(
-            "Failed to get mount list".to_string(),
-        ));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mount_points: Vec<String> = stdout
-        .lines()
-        .filter_map(|line| {
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 3 {
-                Some(parts[2].to_string())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    Ok(mount_points)
 }
 
 #[cfg(test)]
