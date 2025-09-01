@@ -229,4 +229,132 @@ mod tests {
         let actual = format!("{}1", device);
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_gpt_conversion_result() {
+        let result = GptConversionResult {
+            device: "/dev/sda".to_string(),
+            success: true,
+            error_message: None,
+        };
+
+        assert_eq!(result.device, "/dev/sda");
+        assert!(result.success);
+        assert!(result.error_message.is_none());
+    }
+}
+
+/// Convert devices to GPT partition table (supports devices larger than 4TB)
+pub fn change_devices_to_gpt(devices: &[String]) -> Result<(), PartitionError> {
+    for device in devices {
+        change_single_device_to_gpt(device)?;
+    }
+    Ok(())
+}
+
+/// Convert a single device to GPT partition table
+fn change_single_device_to_gpt(device: &str) -> Result<(), PartitionError> {
+    validate_device_path(device)?;
+
+    let output = Command::new("sudo")
+        .args(["parted", "-s", device, "mklabel", "gpt"])
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(PartitionError::CommandFailed(stderr.to_string()));
+    }
+
+    Ok(())
+}
+
+/// Result of GPT conversion operation
+#[derive(Debug, Clone)]
+pub struct GptConversionResult {
+    pub device: String,
+    pub success: bool,
+    pub error_message: Option<String>,
+}
+
+/// Convert devices to GPT with detailed results
+#[allow(dead_code)]
+pub fn change_devices_to_gpt_with_results(devices: &[String]) -> Vec<GptConversionResult> {
+    devices
+        .iter()
+        .map(|device| match change_single_device_to_gpt(device) {
+            Ok(()) => GptConversionResult {
+                device: device.clone(),
+                success: true,
+                error_message: None,
+            },
+            Err(e) => GptConversionResult {
+                device: device.clone(),
+                success: false,
+                error_message: Some(e.to_string()),
+            },
+        })
+        .collect()
+}
+
+/// Check if device is already using GPT
+#[allow(dead_code)]
+pub fn is_device_gpt(device: &str) -> Result<bool, PartitionError> {
+    let output = Command::new("sudo")
+        .args(["parted", "-s", device, "print"])
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(PartitionError::CommandFailed(stderr.to_string()));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.contains("Partition Table: gpt"))
+}
+
+/// Convert devices to GPT with safety checks (skip if already GPT)
+#[allow(dead_code)]
+pub fn change_devices_to_gpt_safe(
+    devices: &[String],
+) -> Result<Vec<GptConversionResult>, PartitionError> {
+    let mut results = Vec::new();
+
+    for device in devices {
+        // Check if already GPT
+        match is_device_gpt(device) {
+            Ok(true) => {
+                // Already GPT, skip
+                results.push(GptConversionResult {
+                    device: device.clone(),
+                    success: true,
+                    error_message: Some("Device already uses GPT, skipped".to_string()),
+                });
+            }
+            Ok(false) => {
+                // Convert to GPT
+                match change_single_device_to_gpt(device) {
+                    Ok(()) => results.push(GptConversionResult {
+                        device: device.clone(),
+                        success: true,
+                        error_message: None,
+                    }),
+                    Err(e) => results.push(GptConversionResult {
+                        device: device.clone(),
+                        success: false,
+                        error_message: Some(e.to_string()),
+                    }),
+                }
+            }
+            Err(e) => {
+                // Error checking GPT status
+                results.push(GptConversionResult {
+                    device: device.clone(),
+                    success: false,
+                    error_message: Some(format!("Failed to check GPT status: {}", e)),
+                });
+            }
+        }
+    }
+
+    Ok(results)
 }
