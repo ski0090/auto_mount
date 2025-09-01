@@ -8,22 +8,23 @@
 //!     let devices = find_connected_satas().expect("Failed to find SATA devices");
 //!     let devices = filter_unmounted_hdd_devices(devices).expect("Failed to filter devices");
 //!     change_devices_to_gpt(&devices);
-//!     let devices = create_partition(&devices);
+//!     let devices = create_partition(&devices).expect("Failed to create partitions");
 //!     format_devices(&devices);
 //!     mount_devices(&devices);
 //! ```
 pub use device_discovery::{find_connected_satas, DeviceDiscoveryError};
 pub use device_filter::{filter_unmounted_hdd_devices, DeviceFilterError, DeviceInfo};
 pub use error::Error;
+pub use partition_manager::{create_partition, PartitionError, PartitionResult};
 
 mod device_discovery;
 mod device_filter;
 mod error;
+mod partition_manager;
 
 use std::ffi::OsStr;
 use std::fs::OpenOptions;
-use std::io::{BufRead, BufReader, ErrorKind, Read, Seek, Write};
-use std::process::Stdio;
+use std::io::{BufRead, BufReader, ErrorKind, Seek, Write};
 use std::{
     collections::VecDeque,
     fs::create_dir,
@@ -80,38 +81,6 @@ pub fn format_devices(devices: &[String]) {
     devices.iter().for_each(|device| {
         command(["mkfs.ext4", "-F", device]);
     });
-}
-
-/// one device one partition
-pub fn create_partition(devices: &[String]) -> Vec<String> {
-    devices
-        .iter()
-        .map(|device| {
-            let mut answers = Command::new("printf")
-                .arg("n\n\n\n\nw\n\"")
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
-            let mut fdisk = Command::new("sudo")
-                .args(["fdisk", device])
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
-
-            if let Some(ref mut stdout) = answers.stdout {
-                if let Some(ref mut stdin) = fdisk.stdin {
-                    let mut buf: Vec<u8> = Vec::new();
-                    stdout.read_to_end(&mut buf).unwrap();
-                    stdin.write_all(&buf).unwrap();
-                }
-            }
-
-            let res = fdisk.wait_with_output().unwrap().stdout;
-            println!("{:?}", String::from_utf8_lossy(&res));
-            String::from(device) + "1"
-        })
-        .collect::<Vec<_>>()
 }
 
 /// changed to gpt to support devices larger than 4TB

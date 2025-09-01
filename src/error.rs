@@ -1,4 +1,4 @@
-use crate::{DeviceDiscoveryError, DeviceFilterError};
+use crate::{DeviceDiscoveryError, DeviceFilterError, PartitionError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -6,4 +6,6 @@ pub enum Error {
     DeviceDiscoveryError(#[from] DeviceDiscoveryError),
     #[error("Device filter error: {0}")]
     DeviceFilterError(#[from] DeviceFilterError),
+    #[error("Partition error: {0}")]
+    PartitionError(#[from] PartitionError),
 }
