@@ -1,13 +1,15 @@
-use auto_mount::{
-    change_devices_to_gpt, create_partition, filter_unmounted_hdd_devices, find_connected_satas,
-    format_devices, mount_devices,
-};
+use auto_mount::{smart_auto_mount, SmartMountError};
 
-fn main() {
-    let devices = find_connected_satas();
-    let devices = filter_unmounted_hdd_devices(devices);
-    change_devices_to_gpt(&devices);
-    let devices = create_partition(&devices);
-    format_devices(&devices);
-    mount_devices(&devices);
+fn main() -> Result<(), SmartMountError> {
+    // Option 1: Smart auto-mount (recommended)
+    // Automatically decides whether to use GPT based on disk size
+    smart_auto_mount()?;
+
+    // Option 2: Simple auto-mount (no GPT conversion)
+    // simple_auto_mount()?;
+
+    // Option 3: Force GPT auto-mount
+    // gpt_auto_mount()?;
+
+    Ok(())
 }

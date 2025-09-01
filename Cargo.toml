@@ -17,4 +17,6 @@ all-features = true
 rustdoc-args = ["--cfg", "doc_cfg"]
 
 [dependencies]
-sysinfo = "0.27"
+strum = { version = "0.26.3", features = ["derive"] }
+sysinfo = "0.37"
+thiserror = "2.0.16"
