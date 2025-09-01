@@ -1,12 +1,12 @@
 [package]
 name = "auto_mount"
-version = "0.1.5"
+version = "0.2.0"
 edition = "2021"
 authors = ["shalom <ski0090@naver.com>"]
 rust-version = "1.63"
 license-file = "LICENSE"
-keywords = ["device", "mount", "disk", "ubuntu"]
-description = "auto_mount has a function that automatically mounts a newly inserted device as a gpt partition."
+keywords = ["mount", "filesystem", "disk", "sata", "gpt"]
+description = "Safe and intelligent Rust library for automatic SATA device mounting with smart GPT conversion, comprehensive error handling, and backup mechanisms."
 repository = "https://github.com/ski0090/auto_mount"
 documentation = "https://docs.rs/auto_mount"
 readme = "ReadMe.md"

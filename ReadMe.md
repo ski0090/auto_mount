@@ -119,7 +119,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-auto_mount = "0.1.5"
+auto_mount = "0.2.0"
 ```
 
 ## Error Handling
