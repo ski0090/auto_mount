@@ -5,21 +5,23 @@
 //! ```ignore
 //!     use auto_mount::*;
 //!
-//!     let devices = find_connected_satas().expect("Failed to find SATA devices");
-//!     let devices = filter_unmounted_hdd_devices(devices).expect("Failed to filter devices");
-//!     change_devices_to_gpt(&devices);
-//!     let devices = create_partition(&devices).expect("Failed to create partitions");
-//!     format_devices(&devices);
-//!     mount_devices(&devices);
+//!     let devices = find_connected_satas()?;
+//!     let devices = filter_unmounted_hdd_devices(devices)?;
+//!     change_devices_to_gpt(&devices)?;
+//!     let devices = create_partition(&devices)?;
+//!     format_devices(&devices)?;
+//!     mount_devices(&devices)?;
 //! ```
 pub use device_discovery::{find_connected_satas, DeviceDiscoveryError};
 pub use device_filter::{filter_unmounted_hdd_devices, DeviceFilterError, DeviceInfo};
 pub use error::Error;
+pub use filesystem::{format_devices, FilesystemError, FilesystemType, FormatResult};
 pub use partition_manager::{create_partition, PartitionError, PartitionResult};
 
 mod device_discovery;
 mod device_filter;
 mod error;
+mod filesystem;
 mod partition_manager;
 
 use std::ffi::OsStr;
@@ -75,12 +77,6 @@ pub fn mount_devices(devices: &[String]) {
     command(["chmod", "664", fstab_path]);
 
     command(["mount", "-a"]);
-}
-
-pub fn format_devices(devices: &[String]) {
-    devices.iter().for_each(|device| {
-        command(["mkfs.ext4", "-F", device]);
-    });
 }
 
 /// changed to gpt to support devices larger than 4TB
