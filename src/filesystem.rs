@@ -28,7 +28,7 @@ impl From<std::io::Error> for FilesystemError {
 
 /// Supported filesystem types
 #[derive(Debug, Clone, PartialEq, EnumString, Display, EnumIter)]
-#[strum(serialize_all = "lowercase")]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum FilesystemType {
     Ext4,
     Ext3,
@@ -134,12 +134,9 @@ mod tests {
     fn test_filesystem_type_from_str() {
         use std::str::FromStr;
 
+        // Test lowercase parsing
         assert_eq!(
             "ext4".parse::<FilesystemType>().unwrap(),
-            FilesystemType::Ext4
-        );
-        assert_eq!(
-            "EXT4".parse::<FilesystemType>().unwrap(),
             FilesystemType::Ext4
         );
         assert_eq!(
@@ -150,7 +147,38 @@ mod tests {
             "fat32".parse::<FilesystemType>().unwrap(),
             FilesystemType::Fat32
         );
+        assert_eq!(
+            "btrfs".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Btrfs
+        );
+
+        // Test uppercase parsing (case insensitive)
+        assert_eq!(
+            "EXT4".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Ext4
+        );
+        assert_eq!(
+            "XFS".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Xfs
+        );
+        assert_eq!(
+            "NTFS".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Ntfs
+        );
+
+        // Test mixed case parsing
+        assert_eq!(
+            "Ext4".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Ext4
+        );
+        assert_eq!(
+            "BtrFS".parse::<FilesystemType>().unwrap(),
+            FilesystemType::Btrfs
+        );
+
+        // Test invalid filesystem
         assert!(FilesystemType::from_str("invalid").is_err());
+        assert!(FilesystemType::from_str("zfs").is_err());
     }
 
     #[test]
@@ -192,11 +220,24 @@ mod tests {
 
     #[test]
     fn test_is_supported() {
+        // Test lowercase
         assert!(FilesystemType::is_supported("ext4"));
         assert!(FilesystemType::is_supported("xfs"));
         assert!(FilesystemType::is_supported("fat32"));
+
+        // Test uppercase (case insensitive)
+        assert!(FilesystemType::is_supported("EXT4"));
+        assert!(FilesystemType::is_supported("XFS"));
+        assert!(FilesystemType::is_supported("NTFS"));
+
+        // Test mixed case
+        assert!(FilesystemType::is_supported("Btrfs"));
+        assert!(FilesystemType::is_supported("Fat32"));
+
+        // Test unsupported
         assert!(!FilesystemType::is_supported("invalid"));
         assert!(!FilesystemType::is_supported("zfs")); // Not supported yet
+        assert!(!FilesystemType::is_supported(""));
     }
 
     #[test]
